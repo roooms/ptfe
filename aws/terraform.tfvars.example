@@ -1,0 +1,4 @@
+aws_region = "eu-west-3"
+service_name = "dan-ptfe"
+aws_instance_ami = "ami-4262d53f"
+ssh_key_name = "dbrown-hc-eu-west-3"
