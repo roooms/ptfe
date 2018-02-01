@@ -13,3 +13,12 @@ variable "aws_instance_ami" {
 variable "ssh_key_name" {
   description = "AWS key pair name to install on the EC2 instance"
 }
+
+variable "owner" {
+  description = "EC2 instance owner"
+}
+
+variable "ttl" {
+  description = "EC2 instance TTL"
+  default = "168"
+}

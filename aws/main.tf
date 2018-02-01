@@ -10,6 +10,10 @@ data "aws_route53_zone" "hashidemos" {
   name = "hashidemos.io."
 }
 
+data "template_file" "user_data" {
+  template = "${file("${path.module}/user-data.tpl")}"
+}
+
 #------------------------------------------------------------------------------
 # vpc
 #------------------------------------------------------------------------------
@@ -122,6 +126,7 @@ resource "aws_instance" "demo" {
   subnet_id              = "${aws_subnet.subnet.id}"
   vpc_security_group_ids = ["${aws_security_group.main.id}"]
   key_name               = "${var.ssh_key_name}"
+  user_data              = "${data.template_file.user_data.rendered}"
 
   root_block_device {
     volume_size = 80
@@ -129,7 +134,9 @@ resource "aws_instance" "demo" {
   }
 
   tags {
-    Name = "${var.service_name}-demo-instance"
+    Name  = "${var.service_name}-demo-instance"
+    owner = "${var.owner}"
+    TTL   = "${var.ttl}"
   }
 }
 
