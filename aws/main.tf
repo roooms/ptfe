@@ -10,8 +10,21 @@ data "aws_route53_zone" "hashidemos" {
   name = "hashidemos.io."
 }
 
+#------------------------------------------------------------------------------
+# instance user data 
+#------------------------------------------------------------------------------
+
+resource "random_pet" "replicated-pwd" {
+  length = 3
+}
+
 data "template_file" "user_data" {
   template = "${file("${path.module}/user-data.tpl")}"
+
+  vars {
+    hostname = "${var.service_name}.hashidemos.io"
+    replicated_pwd = "${random_pet.replicated-pwd.id}"
+  }
 }
 
 #------------------------------------------------------------------------------

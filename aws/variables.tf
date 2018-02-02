@@ -3,7 +3,7 @@ variable "aws_region" {
 }
 
 variable "service_name" {
-  description = "Unique service name to use for DNS and tag all resources with"
+  description = "Unique name to use for DNS"
 }
 
 variable "aws_instance_ami" {
@@ -21,4 +21,8 @@ variable "owner" {
 variable "ttl" {
   description = "EC2 instance TTL"
   default = "168"
+}
+
+variable "private_key_path" {
+  
 }
