@@ -10,6 +10,10 @@ variable "aws_instance_ami" {
   description = "Amazon Machine Image ID"
 }
 
+variable "aws_instance_type" {
+  description = "EC2 instance type"
+}
+
 variable "ssh_key_name" {
   description = "AWS key pair name to install on the EC2 instance"
 }
@@ -20,9 +24,5 @@ variable "owner" {
 
 variable "ttl" {
   description = "EC2 instance TTL"
-  default = "168"
-}
-
-variable "private_key_path" {
-  
+  default     = "168"
 }

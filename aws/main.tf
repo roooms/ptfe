@@ -15,14 +15,14 @@ data "aws_route53_zone" "hashidemos" {
 #------------------------------------------------------------------------------
 
 resource "random_pet" "replicated-pwd" {
-  length = 3
+  length = 2
 }
 
 data "template_file" "user_data" {
   template = "${file("${path.module}/user-data.tpl")}"
 
   vars {
-    hostname = "${var.service_name}.hashidemos.io"
+    hostname       = "${var.service_name}.hashidemos.io"
     replicated_pwd = "${random_pet.replicated-pwd.id}"
   }
 }
@@ -135,7 +135,7 @@ resource "aws_security_group" "main" {
 
 resource "aws_instance" "demo" {
   ami                    = "${var.aws_instance_ami}"
-  instance_type          = "t2.large"
+  instance_type          = "${var.aws_instance_type}"
   subnet_id              = "${aws_subnet.subnet.id}"
   vpc_security_group_ids = ["${aws_security_group.main.id}"]
   key_name               = "${var.ssh_key_name}"
