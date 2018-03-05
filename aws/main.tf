@@ -172,11 +172,11 @@ resource "aws_route53_record" "demo" {
 
 
 #resource "aws_instance" "prod-mounted-disk" {
-#  ami                    = "ami-4262d53f"
-#  instance_type          = "t2.large"
-#  subnet_id              = "${aws_subnet.subnet-a.id}"
+#  ami                    = "${var.aws_instance_ami}"
+#  instance_type          = "${var.aws_instance_type}"
+#  subnet_id              = "${aws_subnet.subnet.id}"
 #  vpc_security_group_ids = ["${aws_security_group.main.id}"]
-#  key_name               = "dbrown-hc-eu-west-3"
+#  key_name               = "${var.ssh_key_name}"
 #
 #  root_block_device {
 #    volume_size = 80
@@ -185,12 +185,14 @@ resource "aws_route53_record" "demo" {
 #
 #  tags {
 #    Name = "${var.service_name}-prod-mounted-disk-instance"
+#    owner = "${var.owner}"
+#    TTL   = "${var.ttl}"
 #  }
 #}
 #
 #resource "aws_ebs_volume" "prod-mounted-disk" {
 #  availability_zone = "${aws_instance.prod-mounted-disk.availability_zone}"
-#  size              = 50
+#  size              = 88
 #  type              = "gp2"
 #
 #  tags {
