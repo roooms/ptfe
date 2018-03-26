@@ -1,5 +1,5 @@
 aws_region = "eu-west-3"
-service_name = "dan-ptfe"
+namespace = "dan-ptfe"
 aws_instance_ami = "ami-4262d53f"
 aws_instance_type = "m5.large"
 ssh_key_name = "dbrown-hc-eu-west-3"

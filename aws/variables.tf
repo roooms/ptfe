@@ -2,8 +2,8 @@ variable "aws_region" {
   description = "AWS region"
 }
 
-variable "service_name" {
-  description = "Unique name to use for DNS"
+variable "namespace" {
+  description = "Unique name to use for DNS and resource naming"
 }
 
 variable "aws_instance_ami" {
