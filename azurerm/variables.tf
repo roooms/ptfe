@@ -1,7 +1,8 @@
-variable "service_name" {
-  description = "Unique name to use"
+variable "namespace" {
+  description = "Unique name to use for resource naming"
 }
 
-variable "resource_group_location" {
-  description = "Azure region to use"
-}
+variable "main_location" {}
+variable "standby_location" {}
+variable "aws_instance_ami" {}
+variable "aws_instance_type" {}
