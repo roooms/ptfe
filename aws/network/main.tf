@@ -36,17 +36,30 @@ resource "aws_route_table" "main" {
   }
 }
 
-resource "aws_subnet" "main" {
+resource "aws_subnet" "public" {
   count             = 2
   cidr_block        = "10.0.${count.index+1}.0/24"
   vpc_id            = "${aws_vpc.main.id}"
   availability_zone = "${element(data.aws_availability_zones.available.names, count.index)}"
 
   tags {
-    Name = "${var.namespace}-subnet-${element(data.aws_availability_zones.available.names, count.index)}"
+    Name = "${var.namespace}-public-${element(data.aws_availability_zones.available.names, count.index+1)}"
   }
 
   map_public_ip_on_launch = true
+}
+
+resource "aws_subnet" "private" {
+  count             = 2
+  cidr_block        = "10.0.${count.index+1}.0/24"
+  vpc_id            = "${aws_vpc.main.id}"
+  availability_zone = "${element(data.aws_availability_zones.available.names, count.index)}"
+
+  tags {
+    Name = "${var.namespace}-private-${element(data.aws_availability_zones.available.names, count.index+1)}"
+  }
+
+  map_public_ip_on_launch = false
 }
 
 resource "aws_db_subnet_group" "main" {
