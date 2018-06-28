@@ -3,7 +3,7 @@ output "main_rg_name" {
 }
 
 output "main_subnet_id" {
-  value = "${data.azurerm_subnet.main.id}"
+  value = "${azurerm_subnet.main.id}"
 }
 
 output "standby_rg_name" {
@@ -11,5 +11,5 @@ output "standby_rg_name" {
 }
 
 output "standby_subnet_id" {
-  value = "${data.azurerm_subnet.standby.id}"
+  value = "${azurerm_subnet.standby.id}"
 }
