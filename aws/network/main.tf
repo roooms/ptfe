@@ -51,7 +51,7 @@ resource "aws_subnet" "public" {
 
 resource "aws_subnet" "private" {
   count             = 2
-  cidr_block        = "10.0.${count.index+1}.0/24"
+  cidr_block        = "10.0.1${count.index+1}.0/24"
   vpc_id            = "${aws_vpc.main.id}"
   availability_zone = "${element(data.aws_availability_zones.available.names, count.index)}"
 
@@ -65,13 +65,13 @@ resource "aws_subnet" "private" {
 resource "aws_db_subnet_group" "main" {
   name_prefix = "${var.namespace}"
   description = "${var.namespace}-db_subnet_group"
-  subnet_ids  = ["${aws_subnet.main.*.id}"]
+  subnet_ids  = ["${aws_subnet.public.*.id}"]
 }
 
 resource "aws_route_table_association" "main" {
   count          = 2
   route_table_id = "${aws_route_table.main.id}"
-  subnet_id      = "${element(aws_subnet.main.*.id, count.index)}"
+  subnet_id      = "${element(aws_subnet.public.*.id, count.index)}"
 }
 
 #------------------------------------------------------------------------------

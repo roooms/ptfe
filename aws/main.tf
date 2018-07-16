@@ -6,8 +6,8 @@ provider "aws" {
   region = "${var.aws_region}"
 }
 
-data "aws_route53_zone" "hashidemos" {
-  name = "hashidemos.io."
+data "aws_route53_zone" "main" {
+  name = "${var.route53_zone}."
 }
 
 #------------------------------------------------------------------------------
@@ -22,7 +22,7 @@ data "template_file" "user_data" {
   template = "${file("${path.module}/user-data.tpl")}"
 
   vars {
-    hostname       = "${var.namespace}.hashidemos.io"
+    hostname       = "${var.namespace}.${data.aws_route53_zone.main.name}"
     replicated_pwd = "${random_pet.replicated-pwd.id}"
   }
 }
@@ -45,11 +45,12 @@ module "demo" {
   namespace              = "${var.namespace}"
   aws_instance_ami       = "${var.aws_instance_ami}"
   aws_instance_type      = "${var.aws_instance_type}"
-  subnet_id              = "${module.network.subnet_ids[0]}"
+  subnet_id              = "${module.network.public_subnet_ids[0]}"
   vpc_security_group_ids = "${module.network.security_group_id}"
   user_data              = ""
   ssh_key_name           = "${var.ssh_key_name}"
-  hashidemos_zone_id     = "${data.aws_route53_zone.hashidemos.zone_id}"
+  route53_zone_id        = "${data.aws_route53_zone.main.zone_id}"
+  route53_zone_name      = "${data.aws_route53_zone.main.name}"
   owner                  = "${var.owner}"
   ttl                    = "${var.ttl}"
 }
@@ -58,36 +59,38 @@ module "demo" {
 # production mounted disk ptfe 
 #------------------------------------------------------------------------------
 
-module "pmd" {
-  source                 = "pmd/"
-  namespace              = "${var.namespace}"
-  aws_instance_ami       = "${var.aws_instance_ami}"
-  aws_instance_type      = "${var.aws_instance_type}"
-  subnet_id              = "${module.network.subnet_ids[0]}"
-  vpc_security_group_ids = "${module.network.security_group_id}"
-  user_data              = ""
-  ssh_key_name           = "${var.ssh_key_name}"
-  hashidemos_zone_id     = "${data.aws_route53_zone.hashidemos.zone_id}"
-  owner                  = "${var.owner}"
-  ttl                    = "${var.ttl}"
-}
+#module "pmd" {
+#  source                 = "pmd/"
+#  namespace              = "${var.namespace}"
+#  aws_instance_ami       = "${var.aws_instance_ami}"
+#  aws_instance_type      = "${var.aws_instance_type}"
+#  subnet_id              = "${module.network.public_subnet_ids[0]}"
+#  vpc_security_group_ids = "${module.network.security_group_id}"
+#  user_data              = ""
+#  ssh_key_name           = "${var.ssh_key_name}"
+#  route53_zone_id        = "${data.aws_route53_zone.main.zone_id}"
+#  route53_zone_name      = "${data.aws_route53_zone.main.name}"
+#  owner                  = "${var.owner}"
+#  ttl                    = "${var.ttl}"
+#}
 
 #------------------------------------------------------------------------------
 # production external-services ptfe 
 #------------------------------------------------------------------------------
 
-module "pes" {
-  source                 = "pes/"
-  namespace              = "${var.namespace}"
-  aws_instance_ami       = "${var.aws_instance_ami}"
-  aws_instance_type      = "${var.aws_instance_type}"
-  subnet_ids             = "${module.network.subnet_ids}"
-  vpc_security_group_ids = "${module.network.security_group_id}"
-  user_data              = ""
-  ssh_key_name           = "${var.ssh_key_name}"
-  hashidemos_zone_id     = "${data.aws_route53_zone.hashidemos.zone_id}"
-  database_pwd           = "${random_pet.replicated-pwd.id}"
-  db_subnet_group_name   = "${module.network.db_subnet_group_id}"
-  owner                  = "${var.owner}"
-  ttl                    = "${var.ttl}"
-}
+#module "pes" {
+#  source                 = "pes/"
+#  namespace              = "${var.namespace}"
+#  aws_instance_ami       = "${var.aws_instance_ami}"
+#  aws_instance_type      = "${var.aws_instance_type}"
+#  subnet_ids             = "${module.network.public_subnet_ids}"
+#  vpc_security_group_ids = "${module.network.security_group_id}"
+#  user_data              = ""
+#  ssh_key_name           = "${var.ssh_key_name}"
+#  route53_zone_id        = "${data.aws_route53_zone.main.zone_id}"
+#  route53_zone_name      = "${data.aws_route53_zone.main.name}"
+#  database_pwd           = "${random_pet.replicated-pwd.id}"
+#  db_subnet_group_name   = "${module.network.db_subnet_group_id}"
+#  owner                  = "${var.owner}"
+#  ttl                    = "${var.ttl}"
+#}

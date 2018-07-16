@@ -32,8 +32,8 @@ resource "aws_eip" "demo" {
 }
 
 resource "aws_route53_record" "demo" {
-  zone_id = "${var.hashidemos_zone_id}"
-  name    = "${local.namespace}.hashidemos.io."
+  zone_id = "${var.route53_zone_id}"
+  name    = "${local.namespace}.${var.route53_zone_name}"
   type    = "A"
   ttl     = "300"
   records = ["${aws_eip.demo.public_ip}"]

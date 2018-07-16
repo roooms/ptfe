@@ -6,6 +6,10 @@ variable "namespace" {
   description = "Unique name to use for DNS and resource naming"
 }
 
+variable "route53_zone" {
+  description = "Route 53 zone to use for domain name"
+}
+
 variable "aws_instance_ami" {
   description = "Amazon Machine Image ID"
 }

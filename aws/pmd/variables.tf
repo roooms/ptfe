@@ -7,4 +7,5 @@ variable "ttl" {}
 variable "user_data" {}
 variable "subnet_id" {}
 variable "vpc_security_group_ids" {}
-variable "hashidemos_zone_id" {}
+variable "route53_zone_id" {}
+variable "route53_zone_name" {}
