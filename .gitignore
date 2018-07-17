@@ -4,3 +4,8 @@
 
 # Module directory
 .terraform/
+
+# Sensitive files
+*.rli
+*.pem
+*.tgz
