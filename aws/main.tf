@@ -6,6 +6,15 @@ provider "aws" {
   region = "${var.aws_region}"
 }
 
+#------------------------------------------------------------------------------
+# route53 hosted zone
+#------------------------------------------------------------------------------
+
+# create route53 hosted zone if it doesn't already exist 
+#resource "aws_route53_zone" "main" {
+#  name = "${var.route53_zone}"
+#}
+
 data "aws_route53_zone" "main" {
   name = "${var.route53_zone}."
 }
