@@ -4,6 +4,7 @@
 
 locals {
   namespace = "${var.namespace}-pes"
+  hostname  = "${local.namespace}.${var.route53_zone}"
 }
 
 resource "aws_instance" "pes" {
@@ -13,7 +14,6 @@ resource "aws_instance" "pes" {
   subnet_id              = "${element(var.subnet_ids, count.index)}"
   vpc_security_group_ids = ["${var.vpc_security_group_ids}"]
   key_name               = "${var.ssh_key_name}"
-  user_data              = "${var.user_data}"
   iam_instance_profile   = "${aws_iam_instance_profile.ptfe.name}"
 
   root_block_device {
@@ -35,7 +35,7 @@ resource "aws_eip" "pes" {
 
 resource "aws_route53_record" "pes" {
   zone_id = "${var.route53_zone_id}"
-  name    = "${local.namespace}.${var.route53_zone_name}"
+  name    = "${local.hostname}"
   type    = "A"
   ttl     = "300"
   records = ["${aws_eip.pes.public_ip}"]
