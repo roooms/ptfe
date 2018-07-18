@@ -1,39 +1,17 @@
 terraform {
-  required_version = ">= 0.10.3"
+  backend "s3" {
+    region = "eu-west-1"
+    bucket = "roooms-tfstate"
+    key    = "roooms/ptfe/aws"
+  }
 }
 
 provider "aws" {
   region = "${var.aws_region}"
 }
 
-#------------------------------------------------------------------------------
-# route53 hosted zone
-#------------------------------------------------------------------------------
-
-# create route53 hosted zone if it doesn't already exist 
-#resource "aws_route53_zone" "main" {
-#  name = "${var.route53_zone}"
-#}
-
 data "aws_route53_zone" "main" {
   name = "${var.route53_zone}."
-}
-
-#------------------------------------------------------------------------------
-# instance user data 
-#------------------------------------------------------------------------------
-
-resource "random_pet" "replicated-pwd" {
-  length = 2
-}
-
-data "template_file" "user_data" {
-  template = "${file("${path.module}/user-data.tpl")}"
-
-  vars {
-    hostname       = "${var.namespace}.${data.aws_route53_zone.main.name}"
-    replicated_pwd = "${random_pet.replicated-pwd.id}"
-  }
 }
 
 #------------------------------------------------------------------------------
@@ -56,10 +34,13 @@ module "demo" {
   aws_instance_type      = "${var.aws_instance_type}"
   subnet_id              = "${module.network.public_subnet_ids[0]}"
   vpc_security_group_ids = "${module.network.security_group_id}"
-  user_data              = ""
   ssh_key_name           = "${var.ssh_key_name}"
+  ssh_key_path           = "${var.ssh_key_path}"
+  license_path           = "${var.license_path}"
+  tls_cert_path          = "${var.tls_cert_path}"
+  tls_key_path           = "${var.tls_key_path}"
   route53_zone_id        = "${data.aws_route53_zone.main.zone_id}"
-  route53_zone_name      = "${data.aws_route53_zone.main.name}"
+  route53_zone           = "${var.route53_zone}"
   owner                  = "${var.owner}"
   ttl                    = "${var.ttl}"
 }
@@ -75,10 +56,13 @@ module "demo" {
 #  aws_instance_type      = "${var.aws_instance_type}"
 #  subnet_id              = "${module.network.public_subnet_ids[0]}"
 #  vpc_security_group_ids = "${module.network.security_group_id}"
-#  user_data              = ""
 #  ssh_key_name           = "${var.ssh_key_name}"
+#  ssh_key_path           = "${var.ssh_key_path}"
+#  license_path           = "${var.license_path}"
+#  tls_cert_path          = "${var.tls_cert_path}"
+#  tls_key_path           = "${var.tls_key_path}"
 #  route53_zone_id        = "${data.aws_route53_zone.main.zone_id}"
-#  route53_zone_name      = "${data.aws_route53_zone.main.name}"
+#  route53_zone           = "${var.route53_zone}"
 #  owner                  = "${var.owner}"
 #  ttl                    = "${var.ttl}"
 #}
@@ -94,10 +78,13 @@ module "demo" {
 #  aws_instance_type      = "${var.aws_instance_type}"
 #  subnet_ids             = "${module.network.public_subnet_ids}"
 #  vpc_security_group_ids = "${module.network.security_group_id}"
-#  user_data              = ""
 #  ssh_key_name           = "${var.ssh_key_name}"
+#  ssh_key_path           = "${var.ssh_key_path}"
+#  license_path           = "${var.license_path}"
+#  tls_cert_path          = "${var.tls_cert_path}"
+#  tls_key_path           = "${var.tls_key_path}"
 #  route53_zone_id        = "${data.aws_route53_zone.main.zone_id}"
-#  route53_zone_name      = "${data.aws_route53_zone.main.name}"
+#  route53_zone           = "${var.route53_zone}"
 #  database_pwd           = "${random_pet.replicated-pwd.id}"
 #  db_subnet_group_name   = "${module.network.db_subnet_group_id}"
 #  owner                  = "${var.owner}"
