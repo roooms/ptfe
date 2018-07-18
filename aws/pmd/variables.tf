@@ -5,7 +5,12 @@ variable "ssh_key_name" {}
 variable "ssh_key_path" {}
 variable "owner" {}
 variable "ttl" {}
-variable "subnet_id" {}
+
+variable "subnet_ids" {
+  type = "list"
+}
+
+variable "vpc_id" {}
 variable "vpc_security_group_ids" {}
 variable "route53_zone_id" {}
 variable "route53_zone" {}

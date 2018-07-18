@@ -7,6 +7,22 @@ locals {
   hostname  = "${local.namespace}.${var.route53_zone}"
 }
 
+data "template_file" "replicated_settings" {
+  template = "${file("${path.module}/replicated-settings.tpl.json")}"
+
+  vars {
+    hostname = "${local.hostname}"
+  }
+}
+
+data "template_file" "replicated_conf" {
+  template = "${file("${path.module}/replicated.tpl.conf")}"
+
+  vars {
+    hostname = "${local.hostname}"
+  }
+}
+
 resource "aws_instance" "pmd" {
   count                  = 2
   ami                    = "${var.aws_instance_ami}"
@@ -67,14 +83,15 @@ resource "aws_instance" "pmd" {
 
   provisioner "remote-exec" {
     inline = [
+      "sudo mkfs -t ext4 /dev/xvdb",
+      "sudo mkdir /data",
+      "sudo mount /dev/xvdb /data",
       "sudo mv /tmp/fullchain.pem /etc/",
       "sudo mv /tmp/private.key /etc/",
-
-      #      "sudo mv /tmp/replicated.conf /etc/",
+      "sudo mv /tmp/replicated.conf /etc/",
       "curl -o install.sh https://install.terraform.io/ptfe/stable",
+      "# sudo bash install.sh no-proxy",
     ]
-
-    #      "sudo bash install.sh no-proxy",
 
     connection {
       user        = "ubuntu"
@@ -98,12 +115,54 @@ resource "aws_route53_record" "pmd" {
   zone_id = "${var.route53_zone_id}"
   name    = "${local.hostname}"
   type    = "A"
-  ttl     = "300"
-  records = ["${aws_instance.pmd.public_ip}"]
+
+  alias {
+    name                   = "${aws_lb.pmd.dns_name}"
+    zone_id                = "${aws_lb.pmd.zone_id}"
+    evaluate_target_health = false
+  }
+}
+
+resource "aws_lb" "pmd" {
+  name               = "${local.namespace}-lb"
+  internal           = false
+  load_balancer_type = "network"
+  subnets            = ["${var.subnet_ids}"]
+
+  tags {
+    Name = "${local.namespace}-lb"
+  }
+}
+
+resource "aws_lb_listener" "pmd" {
+  load_balancer_arn = "${aws_lb.pmd.arn}"
+  port              = "443"
+  protocol          = "TCP"
+
+  default_action {
+    target_group_arn = "${aws_lb_target_group.pmd.0.arn}"
+    type             = "forward"
+  }
+}
+
+resource "aws_lb_target_group" "pmd" {
+  count                = 2
+  name                 = "${local.namespace}-tg-${count.index+1}"
+  port                 = 443
+  protocol             = "TCP"
+  deregistration_delay = 15
+  vpc_id               = "${var.vpc_id}"
+}
+
+resource "aws_lb_target_group_attachment" "pmd" {
+  count            = 2
+  target_group_arn = "${element(aws_lb_target_group.pmd.*.arn, count.index)}"
+  target_id        = "${element(aws_instance.pmd.*.id, count.index)}"
+  port             = 443
 }
 
 resource "aws_ebs_volume" "pmd" {
-  availability_zone = "${aws_instance.pmd.availability_zone}"
+  availability_zone = "${aws_instance.pmd.0.availability_zone}"
   size              = 88
   type              = "gp2"
 
@@ -114,6 +173,6 @@ resource "aws_ebs_volume" "pmd" {
 
 resource "aws_volume_attachment" "pmd" {
   device_name = "/dev/xvdb"
-  instance_id = "${aws_instance.pmd.id}"
+  instance_id = "${aws_instance.pmd.0.id}"
   volume_id   = "${aws_ebs_volume.pmd.id}"
 }
