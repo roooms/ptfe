@@ -1,4 +1,4 @@
-# PTFE resource provisioner and software installer - GCP
+# PTFE resource provisioner - GCP
 
 Provisions the necessary GCP resources for each PTFE installation type.
 
@@ -14,3 +14,7 @@ Future work:
 
 - __demo__ - Proof of Concept - single VM instance with enough disk space for data storage
 - __pmd__ - Production (Mounted Disk) - single VM instance with attached EBS volume for data storage
+
+## Limitations
+
+- Some resources currently use hardcoded IP ranges which have not yet been converted to variables
