@@ -9,7 +9,7 @@ resource "google_compute_network" "main" {
 
 resource "google_compute_subnetwork" "private" {
   name          = "${var.namespace}-private"
-  ip_cidr_range = "10.1.0.0/24"
+  ip_cidr_range = "${var.subnetwork_ip_cidr_range}"
   network       = "${google_compute_network.main.self_link}"
 }
 
@@ -43,7 +43,7 @@ resource "google_compute_firewall" "allow_internal" {
   name          = "${var.namespace}-allow-internal"
   description   = "${var.namespace} allow internal traffic"
   network       = "${google_compute_network.main.name}"
-  source_ranges = ["10.0.0.0/16"]
+  source_ranges = ["${var.subnetwork_ip_cidr_range}"]
 
   allow {
     protocol = "icmp"

@@ -1,6 +1,7 @@
 region = "europe-west1"
 project = "ptfe-reference"
 namespace = "dan-ptfe"
+subnetwork_ip_cidr_range = "10.1.0.0/24"
 gcp_machine_image = "debian-cloud/debian-9-stretch-v20180814"
 gcp_machine_type = "n1-standard-1"
 ssh_user = "dan"

@@ -1,5 +1,5 @@
 terraform {
-  required_version = ">= 0.10.3"
+  required_version = ">= 0.11.7"
 }
 
 provider "google" {
@@ -22,8 +22,9 @@ resource "google_compute_project_metadata_item" "ssh_key" {
 #------------------------------------------------------------------------------
 
 module "network" {
-  source    = "network/"
-  namespace = "${var.namespace}"
+  source                   = "network/"
+  namespace                = "${var.namespace}"
+  subnetwork_ip_cidr_range = "${var.subnetwork_ip_cidr_range}"
 }
 
 #------------------------------------------------------------------------------

@@ -10,6 +10,10 @@ variable "namespace" {
   description = "Unique name to use for DNS and resource naming"
 }
 
+variable "subnetwork_ip_cidr_range" {
+  description = "Subnet CIDR range eg 10.1.0.0/24"
+}
+
 variable "active_ptfe_instance" {
   description = "The active PTFE instance ie ptfe1 or ptfe2"
   default     = "ptfe1"
