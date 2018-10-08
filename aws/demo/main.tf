@@ -7,6 +7,14 @@ locals {
   hostname  = "${local.namespace}.${var.route53_zone}"
 }
 
+resource "aws_route53_record" "demo" {
+  zone_id = "${var.route53_zone_id}"
+  name    = "${local.hostname}"
+  type    = "A"
+  ttl     = "300"
+  records = ["${aws_instance.demo.public_ip}"]
+}
+
 data "template_file" "replicated_settings" {
   template = "${file("${path.module}/replicated-settings.tpl.json")}"
 
@@ -27,7 +35,7 @@ resource "aws_instance" "demo" {
   ami                    = "${var.aws_instance_ami}"
   instance_type          = "${var.aws_instance_type}"
   subnet_id              = "${var.subnet_id}"
-  vpc_security_group_ids = ["${var.vpc_security_group_ids}"]
+  vpc_security_group_ids = ["${aws_security_group.demo.id}"]
   key_name               = "${var.ssh_key_name}"
 
   provisioner "file" {
@@ -82,9 +90,10 @@ resource "aws_instance" "demo" {
 
   provisioner "remote-exec" {
     inline = [
-      "sudo mv /tmp/fullchain.pem /etc/",
-      "sudo mv /tmp/private.key /etc/",
-      "sudo mv /tmp/replicated.conf /etc/",
+      "sudo mkdir -p /etc/ssl",
+      "sudo mv -v /tmp/fullchain.pem /etc/ssl/",
+      "sudo mv -v /tmp/private.key /etc/ssl/",
+      "sudo mv -v /tmp/replicated.conf /etc/",
       "curl -o install.sh https://install.terraform.io/ptfe/stable",
       "sudo bash install.sh no-proxy",
     ]
@@ -107,10 +116,54 @@ resource "aws_instance" "demo" {
   }
 }
 
-resource "aws_route53_record" "demo" {
-  zone_id = "${var.route53_zone_id}"
-  name    = "${local.hostname}"
-  type    = "A"
-  ttl     = "300"
-  records = ["${aws_instance.demo.public_ip}"]
+#------------------------------------------------------------------------------
+# security groups
+#------------------------------------------------------------------------------
+
+resource "aws_security_group" "demo" {
+  name        = "${local.namespace}-sg"
+  description = "${local.namespace} security group"
+  vpc_id      = "${var.vpc_id}"
+
+  ingress {
+    protocol  = -1
+    from_port = 0
+    to_port   = 0
+    self      = true
+  }
+
+  ingress {
+    protocol    = "tcp"
+    from_port   = 80
+    to_port     = 80
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    protocol    = "tcp"
+    from_port   = 443
+    to_port     = 443
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    protocol    = "tcp"
+    from_port   = 8800
+    to_port     = 8800
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    protocol    = "tcp"
+    from_port   = 22
+    to_port     = 22
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    protocol    = -1
+    from_port   = 0
+    to_port     = 0
+    cidr_blocks = ["0.0.0.0/0"]
+  }
 }

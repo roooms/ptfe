@@ -6,7 +6,7 @@ variable "ssh_key_path" {}
 variable "owner" {}
 variable "ttl" {}
 variable "subnet_id" {}
-variable "vpc_security_group_ids" {}
+variable "vpc_id" {}
 variable "route53_zone_id" {}
 variable "route53_zone" {}
 variable "license_path" {}

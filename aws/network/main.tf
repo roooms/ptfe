@@ -37,7 +37,7 @@ resource "aws_route_table" "main" {
 }
 
 resource "aws_subnet" "public" {
-  count             = 2
+  count             = 3
   cidr_block        = "10.0.${count.index+1}.0/24"
   vpc_id            = "${aws_vpc.main.id}"
   availability_zone = "${element(data.aws_availability_zones.available.names, count.index)}"
@@ -50,7 +50,7 @@ resource "aws_subnet" "public" {
 }
 
 resource "aws_subnet" "private" {
-  count             = 2
+  count             = 3
   cidr_block        = "10.0.1${count.index+1}.0/24"
   vpc_id            = "${aws_vpc.main.id}"
   availability_zone = "${element(data.aws_availability_zones.available.names, count.index)}"
@@ -72,56 +72,4 @@ resource "aws_route_table_association" "main" {
   count          = 2
   route_table_id = "${aws_route_table.main.id}"
   subnet_id      = "${element(aws_subnet.public.*.id, count.index)}"
-}
-
-#------------------------------------------------------------------------------
-# security groups
-#------------------------------------------------------------------------------
-
-resource "aws_security_group" "main" {
-  name        = "${var.namespace}-sg"
-  description = "${var.namespace} security group"
-  vpc_id      = "${aws_vpc.main.id}"
-
-  ingress {
-    protocol  = -1
-    from_port = 0
-    to_port   = 0
-    self      = true
-  }
-
-  ingress {
-    protocol    = "tcp"
-    from_port   = 22
-    to_port     = 22
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  ingress {
-    protocol    = "tcp"
-    from_port   = 80
-    to_port     = 80
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  ingress {
-    protocol    = "tcp"
-    from_port   = 443
-    to_port     = 443
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  ingress {
-    protocol    = "tcp"
-    from_port   = 8800
-    to_port     = 8800
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  egress {
-    protocol    = -1
-    from_port   = 0
-    to_port     = 0
-    cidr_blocks = ["0.0.0.0/0"]
-  }
 }

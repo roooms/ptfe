@@ -11,7 +11,6 @@ variable "subnet_ids" {
 }
 
 variable "vpc_id" {}
-variable "vpc_security_group_ids" {}
 variable "route53_zone_id" {}
 variable "route53_zone" {}
 variable "license_path" {}

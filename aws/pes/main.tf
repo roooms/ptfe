@@ -7,38 +7,86 @@ locals {
   hostname  = "${local.namespace}.${var.route53_zone}"
 }
 
-resource "aws_instance" "pes" {
-  count                  = 2
-  ami                    = "${var.aws_instance_ami}"
-  instance_type          = "${var.aws_instance_type}"
-  subnet_id              = "${element(var.subnet_ids, count.index)}"
-  vpc_security_group_ids = ["${var.vpc_security_group_ids}"]
-  key_name               = "${var.ssh_key_name}"
-  iam_instance_profile   = "${aws_iam_instance_profile.ptfe.name}"
-
-  root_block_device {
-    volume_size = 80
-    volume_type = "gp2"
-  }
-
-  tags {
-    Name  = "${local.namespace}-instance-${count.index+1}"
-    owner = "${var.owner}"
-    TTL   = "${var.ttl}"
-  }
-}
-
-resource "aws_eip" "pes" {
-  instance = "${aws_instance.pes.0.id}"
-  vpc      = true
+data "aws_availability_zones" "available" {
+  state = "available"
 }
 
 resource "aws_route53_record" "pes" {
   zone_id = "${var.route53_zone_id}"
   name    = "${local.hostname}"
   type    = "A"
-  ttl     = "300"
-  records = ["${aws_eip.pes.public_ip}"]
+
+  alias {
+    name                   = "${aws_elb.pes.dns_name}"
+    zone_id                = "${aws_elb.pes.zone_id}"
+    evaluate_target_health = true
+  }
+}
+
+resource "aws_elb" "pes" {
+  name            = "${local.namespace}-elb"
+  security_groups = ["${aws_security_group.elb.id}"]
+  subnets         = ["${var.subnet_ids}"]
+
+  listener {
+    instance_port     = 80
+    instance_protocol = "http"
+    lb_port           = 80
+    lb_protocol       = "http"
+  }
+
+  health_check {
+    healthy_threshold   = 2
+    unhealthy_threshold = 2
+    timeout             = 3
+    target              = "HTTP:80/"
+    interval            = 15
+  }
+
+  idle_timeout                = 400
+  connection_draining         = true
+  connection_draining_timeout = 400
+}
+
+data "template_file" "pes" {
+  template = "${file("${path.module}/user-data.tpl")}"
+
+  vars = {
+    agent_type = "client"
+  }
+}
+
+resource "aws_launch_configuration" "pes" {
+  associate_public_ip_address = false
+  ebs_optimized               = false
+  iam_instance_profile        = "${aws_iam_instance_profile.ptfe.name}"
+  image_id                    = "${var.aws_instance_ami}"
+  instance_type               = "${var.aws_instance_type}"
+  user_data                   = "${data.template_file.pes.rendered}"
+  key_name                    = "${var.ssh_key_name}"
+
+  security_groups = ["${aws_security_group.asg.id}"]
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
+resource "aws_autoscaling_group" "pes" {
+  launch_configuration = "${aws_launch_configuration.pes.id}"
+  load_balancers       = ["${aws_elb.pes.id}"]
+  vpc_zone_identifier  = ["${var.subnet_ids}"]
+  name                 = "${local.namespace}-asg"
+  max_size             = "1"
+  min_size             = "1"
+  desired_capacity     = "1"
+  default_cooldown     = 30
+
+  tag {
+    key                 = "Name"
+    value               = "${local.namespace}-instance"
+    propagate_at_launch = true
+  }
 }
 
 resource "aws_s3_bucket" "pes" {
@@ -65,7 +113,7 @@ resource "aws_db_instance" "pes" {
   username                  = "ptfe"
   password                  = "${var.database_pwd}"
   db_subnet_group_name      = "${var.db_subnet_group_name}"
-  vpc_security_group_ids    = ["${var.vpc_security_group_ids}"]
+  vpc_security_group_ids    = ["${aws_security_group.asg.id}"]
   final_snapshot_identifier = "${local.namespace}-db-instance-final-snapshot"
 }
 
@@ -117,4 +165,124 @@ resource "aws_iam_role_policy" "ptfe" {
   name   = "${local.namespace}-iam_role_policy"
   role   = "${aws_iam_role.ptfe.name}"
   policy = "${data.aws_iam_policy_document.ptfe.json}"
+}
+
+#------------------------------------------------------------------------------
+# security groups
+#------------------------------------------------------------------------------
+
+resource "aws_security_group" "elb" {
+  name        = "${local.namespace}-elb-sg"
+  description = "${local.namespace} elb security group"
+  vpc_id      = "${var.vpc_id}"
+
+  ingress {
+    protocol  = -1
+    from_port = 0
+    to_port   = 0
+    self      = true
+  }
+
+  ingress {
+    protocol    = "tcp"
+    from_port   = 80
+    to_port     = 80
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    protocol    = "tcp"
+    from_port   = 443
+    to_port     = 443
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    protocol    = "tcp"
+    from_port   = 8800
+    to_port     = 8800
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    protocol    = -1
+    from_port   = 0
+    to_port     = 0
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
+resource "aws_security_group" "asg" {
+  name        = "${local.namespace}-asg-sg"
+  description = "${local.namespace} asg security group"
+  vpc_id      = "${var.vpc_id}"
+
+  ingress {
+    protocol  = -1
+    from_port = 0
+    to_port   = 0
+    self      = true
+  }
+
+  ingress {
+    protocol        = "tcp"
+    from_port       = 80
+    to_port         = 80
+    security_groups = ["${aws_security_group.elb.id}"]
+  }
+
+  ingress {
+    protocol        = "tcp"
+    from_port       = 443
+    to_port         = 443
+    security_groups = ["${aws_security_group.elb.id}"]
+  }
+
+  ingress {
+    protocol        = "tcp"
+    from_port       = 8800
+    to_port         = 8800
+    security_groups = ["${aws_security_group.elb.id}"]
+  }
+
+  ingress {
+    protocol    = "tcp"
+    from_port   = 22
+    to_port     = 22
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    protocol    = -1
+    from_port   = 0
+    to_port     = 0
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
+resource "aws_security_group" "db" {
+  name        = "${local.namespace}-db-sg"
+  description = "${local.namespace} db security group"
+  vpc_id      = "${var.vpc_id}"
+
+  ingress {
+    protocol  = -1
+    from_port = 0
+    to_port   = 0
+    self      = true
+  }
+
+  ingress {
+    protocol        = -1
+    from_port       = 0
+    to_port         = 0
+    security_groups = ["${aws_security_group.asg.id}"]
+  }
+
+  egress {
+    protocol    = -1
+    from_port   = 0
+    to_port     = 0
+    cidr_blocks = ["0.0.0.0/0"]
+  }
 }
