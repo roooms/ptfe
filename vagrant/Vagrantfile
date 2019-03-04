@@ -1,0 +1,42 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.configure("2") do |config|
+
+  # PTFE server
+  config.vm.define "ptfe", autostart: true do |s|
+    s.ssh.insert_key = false
+    s.vm.box = "bento/ubuntu-16.04"
+    s.vm.box_check_update = false
+    s.vm.hostname = "ptfe"
+    s.vm.network "private_network", ip: "10.0.0.71"
+    s.vm.provider "virtualbox" do |vb|
+      vb.gui = false
+      vb.cpus = 2
+      vb.memory = 4096
+    end
+    s.vm.provision "shell", inline: <<-SHELL
+      apt-get update
+      apt-get install htop
+    SHELL
+  end
+
+  # Storage Server (Postgres, Minio)
+  config.vm.define "storage", autostart: true do |s|
+    s.ssh.insert_key = false
+    s.vm.box = "bento/ubuntu-16.04"
+    s.vm.box_check_update = false
+    s.vm.hostname = "storage"
+    s.vm.network "private_network", ip: "10.0.0.72"
+    s.vm.provider "virtualbox" do |vb|
+      vb.gui = false
+      vb.cpus = 1
+      vb.memory = 1024
+    end
+    s.vm.provision "shell", inline: <<-SHELL
+      apt-get update
+      apt-get install htop
+    SHELL
+  end
+
+end

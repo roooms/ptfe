@@ -1,0 +1,12 @@
+[Unit]
+Description=minio - Cloud Storage Server
+Requires=network-online.target
+After=network-online.target
+
+[Service]
+EnvironmentFile=-/etc/default/minio
+Restart=on-failure
+ExecStart=/usr/local/bin/minio server --address "10.0.0.72:9000" --config-dir /etc/minio.d/ /opt/minio
+
+[Install]
+WantedBy=multi-user.target
