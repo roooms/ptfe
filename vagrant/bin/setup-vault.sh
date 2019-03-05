@@ -55,6 +55,7 @@ source /etc/profile.d/vault.sh
 echo "--> Starting vault"
 sudo systemctl enable vault
 sudo systemctl start vault
+sleep 5
 
 echo "--> Initialising vault"
 vault operator init | tee /tmp/vault.init
